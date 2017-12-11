@@ -11,7 +11,7 @@
 #define DIVISIONS 100
 
 GLdouble upY = 1.0;
-static GLfloat R = 2.0;
+static GLfloat R = 3.0;
 static GLfloat azymut = 0.0;   // wokol Y
 static GLfloat elewacja = 0.0;
 static GLfloat pix2angle;     // przelicznik pikseli na stopnie
@@ -23,7 +23,7 @@ static GLint status = 0;       // stan klawiszy myszy
 static int x_pos_old = 0;       // poprzednia pozycja kursora myszy
 static int y_pos_old = 0;
 static int y_scale_old = 0;
-static int y_scale_new = 0;
+static int y_scale_new = 1;
 
 static int delta_x = 0;        // ró¿nica pomiêdzy pozycj¹ bie¿¹c¹
 static int delta_y = 0;
@@ -61,7 +61,6 @@ void initializeTables(int numberOfDivides)
 {
 	float range = 2.0 * XRange;
 	float interval = range / (float)(numberOfDivides - 1);
-	float minY = 10000.0;
 	
 	int half = numberOfDivides / 2;
 	for (int i = 0; i < numberOfDivides; i++)
@@ -77,9 +76,6 @@ void initializeTables(int numberOfDivides)
 			float absX = calculateTable[i][j][0] > 0 ? calculateTable[i][j][0] : -1 * calculateTable[i][j][0];
 			float absZ = calculateTable[i][j][2] > 0 ? calculateTable[i][j][2] : -1 * calculateTable[i][j][2];
 
-			/*float xVal = (1 + absX) / 2;
-			float zVal = (1 + absZ) / 2;*/
-
 			float xVal = (1 + abs(x*sqrt(x*x + z*z - x*x*z*z) / sqrt(x*x + z*z))) / 2;
 			float zVal = (1 + abs(z*sqrt(x*x + z*z - x*x*z*z) / sqrt(x*x + z*z))) / 2;
 
@@ -87,12 +83,10 @@ void initializeTables(int numberOfDivides)
 			float value = f(calculateTable[i][j][0]*calculateTable[i][j][2], WeierstrassParameterA);
 
 			calculateTable[i][j][1] = value;
-			if (value < minY) minY = value;
 		}
 	}
 	pointTable = calculateTable;
 	tableInitialized = true;
-	std::cout << "minY: " << minY << std::endl;
 
 	float maxABS = 0.0;
 	float max = 0.0;
@@ -197,10 +191,9 @@ void Motion(GLsizei x, GLsizei y)
 		if (y_scale_new != 0 && y_scale_old != 0)
 		{
 			float dif = (float)y_scale_new - (float)y_scale_old;
-			float add = dif / 100;
-			if (abs(add) < 1.0)
+			float add = dif / 250;
+			if (abs(add) < 0.5)
 			{
-				printf("XRange: %f\n", XRange);
 				XRange += add;
 			}
 		}
@@ -285,10 +278,10 @@ void RenderScene(void)
 
 	//glColor3f(1.0f, 1.0f, 1.0f);
 
-	if (tableInitialized)
+	//if (tableInitialized)
 	{
 		double scale = 1.0 / (double)calculateTable[DIVISIONS-1][DIVISIONS-1][0];
-		glScaled(scale, 1.0, scale);
+		glScaled(scale, scale, scale);
 	}
 	// Ustawienie koloru rysowania na bia³y
 	mountain(DIVISIONS);

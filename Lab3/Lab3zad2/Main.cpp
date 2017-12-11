@@ -258,9 +258,12 @@ void RenderScene(void)
 		upY = -1;
 	else
 		upY = 1;
-		
+	
+	//wspó³rzêdna X kamery
 	viewer[0] = R*cos(azymut)*cos(elewacja);
+	//wspó³rzêdna Y kamery
 	viewer[1] = R*sin(elewacja);
+	//wspó³rzêdna Z kamery
 	viewer[2] = R*sin(azymut)*cos(elewacja);
 
 
