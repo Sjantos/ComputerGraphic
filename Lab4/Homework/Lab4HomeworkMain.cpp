@@ -471,14 +471,16 @@ void initializeTables(int numberOfDivides)
 			pointTable[i][j][1] = f(u*v, WeierstrassParameterA);
 
 			//normals
-			float dxdu = 1.0;// cos(M_PI*z);
-			float dxdv = u;// -1 * M_PI*sin(M_PI*z);
+			float dxdu = 1.0;
+			float dxdv = 0.0;
 			float dydu = 0.0;
-			for (int k = 0; k < WeierstrassSum; k++)
-				dydu += cos(M_PI*(u)*pow(k, WeierstrassParameterA));
+			for (int i = 0; i < WeierstrassSum; i++)
+				dydu += v*cos(M_PI*u*v*pow(i, WeierstrassParameterA));
 			float dydv = 0.0;
-			float dzdu = v;// sin(M_PI*z);
-			float dzdv = 1.0;// M_PI*x*cos(M_PI*z);
+			for (int k = 0; k < WeierstrassSum; k++)
+				dydv += u*cos(M_PI*u*v*pow(k, WeierstrassParameterA));
+			float dzdu = 0.0;
+			float dzdv = 1.0;
 			float nx = dydu*dzdv - dzdu*dydv;
 			float ny = dzdu*dxdv - dxdu*dzdv;
 			float nz = dxdu*dydv - dydu*dxdv;

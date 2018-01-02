@@ -212,24 +212,83 @@ void drawSolidEgg(int numberOfDivides)
 {
 	glBegin(GL_TRIANGLES);
 	glColor3f(0.5, 0.5, 0.5);
-	for (int a = 1; a < numberOfDivides; a++)
-		for (int b = 1; b < numberOfDivides; b++)
-		{
-			//lewy dolny trojkat
-				glNormal3fv(eggNormals[a][b]);
-			glVertex3fv(eggTable[a][b]);
-				glNormal3fv(eggNormals[a-1][b-1]);
-			glVertex3fv(eggTable[a - 1][b - 1]);
-				glNormal3fv(eggNormals[a-1][b]);
-			glVertex3fv(eggTable[a - 1][b]);
-			//prawy gorny trojkat
-				glNormal3fv(eggNormals[a][b]);
-			glVertex3fv(eggTable[a][b]);
-				glNormal3fv(eggNormals[a-1][b-1]);
-			glVertex3fv(eggTable[a - 1][b - 1]);
-				glNormal3fv(eggNormals[a][b-1]);
-			glVertex3fv(eggTable[a][b - 1]);
+	float interval = 1.0 / (float)(numberOfDivides - 1);
+
+	for (int i = 0; i < DIVISIONS - 1; i++) {
+		for (int j = 0; j < DIVISIONS - 1; j++) {
+			if (i < (DIVISIONS - 1) / 2) {
+				//glTexCoord2f((double)(i + 1)*interval, (double)j*interval);
+				glNormal3f(eggNormals[i + 1][j][0], eggNormals[i + 1][j][1], eggNormals[i + 1][j][2]);
+				glVertex3f(eggTable[i + 1][j][0], eggTable[i + 1][j][1], eggTable[i + 1][j][2]);
+
+				//glTexCoord2f((double)(i)*interval, (double)(j + 1)*interval);
+				glNormal3f(eggNormals[i][j + 1][0], eggNormals[i][j + 1][1], eggNormals[i][j + 1][2]);
+				glVertex3f(eggTable[i][j + 1][0], eggTable[i][j + 1][1], eggTable[i][j + 1][2]);
+
+				//glTexCoord2f((double)(i)*interval, (double)(j)*interval);
+				glNormal3f(eggNormals[i][j][0], eggNormals[i][j][1], eggNormals[i][j][2]);
+				glVertex3f(eggTable[i][j][0], eggTable[i][j][1], eggTable[i][j][2]);
+
+				//glTexCoord2f((double)(i + 1)*interval, (double)(j)*interval);
+				glNormal3f(eggNormals[i + 1][j][0], eggNormals[i + 1][j][1], eggNormals[i + 1][j][2]);
+				glVertex3f(eggTable[i + 1][j][0], eggTable[i + 1][j][1], eggTable[i + 1][j][2]);
+
+				//glTexCoord2f((double)(i + 1)*interval, (double)(j + 1)*interval);
+				glNormal3f(eggNormals[i + 1][j + 1][0], eggNormals[i + 1][j + 1][1], eggNormals[i + 1][j + 1][2]);
+				glVertex3f(eggTable[i + 1][j + 1][0], eggTable[i + 1][j + 1][1], eggTable[i + 1][j + 1][2]);
+
+				//glTexCoord2f((double)(i)*interval, (double)(j + 1)*interval);
+				glNormal3f(eggNormals[i][j + 1][0], eggNormals[i][j + 1][1], eggNormals[i][j + 1][2]);
+				glVertex3f(eggTable[i][j + 1][0], eggTable[i][j + 1][1], eggTable[i][j + 1][2]);
+
+			}
+			else {
+				//glTexCoord2f((double)(i)*interval, (double)j*interval);
+				glNormal3f(eggNormals[i][j][0], eggNormals[i][j][1], eggNormals[i][j][2]);
+				glVertex3f(eggTable[i][j][0], eggTable[i][j][1], eggTable[i][j][2]);
+
+				//glTexCoord2f((double)(i)*interval, (double)(j + 1)*interval);
+				glNormal3f(eggNormals[i][j + 1][0], eggNormals[i][j + 1][1], eggNormals[i][j + 1][2]);
+				glVertex3f(eggTable[i][j + 1][0], eggTable[i][j + 1][1], eggTable[i][j + 1][2]);
+
+				//glTexCoord2f((double)(i + 1)*interval, (double)(j)*interval);
+				glNormal3f(eggNormals[i + 1][j][0], eggNormals[i + 1][j][1], eggNormals[i + 1][j][2]);
+				glVertex3f(eggTable[i + 1][j][0], eggTable[i + 1][j][1], eggTable[i + 1][j][2]);
+
+				//glTexCoord2f((double)(i)*interval, (double)(j + 1)*interval);
+				glNormal3f(eggNormals[i][j + 1][0], eggNormals[i][j + 1][1], eggNormals[i][j + 1][2]);
+				glVertex3f(eggTable[i][j + 1][0], eggTable[i][j + 1][1], eggTable[i][j + 1][2]);
+
+				//glTexCoord2f((double)(i + 1)*interval, (double)(j + 1)*interval);
+				glNormal3f(eggNormals[i + 1][j + 1][0], eggNormals[i + 1][j + 1][1], eggNormals[i + 1][j + 1][2]);
+				glVertex3f(eggTable[i + 1][j + 1][0], eggTable[i + 1][j + 1][1], eggTable[i + 1][j + 1][2]);
+
+				//glTexCoord2f((double)(i + 1)*interval, (double)(j)*interval);
+				glNormal3f(eggNormals[i + 1][j][0], eggNormals[i + 1][j][1], eggNormals[i + 1][j][2]);
+				glVertex3f(eggTable[i + 1][j][0], eggTable[i + 1][j][1], eggTable[i + 1][j][2]);
+			}
+
 		}
+	}
+
+	//for (int a = 1; a < numberOfDivides; a++)
+	//	for (int b = 1; b < numberOfDivides; b++)
+	//	{
+	//		//lewy dolny trojkat
+	//			glNormal3fv(eggNormals[a][b]);
+	//		glVertex3fv(eggTable[a][b]);
+	//			glNormal3fv(eggNormals[a-1][b-1]);
+	//		glVertex3fv(eggTable[a - 1][b - 1]);
+	//			glNormal3fv(eggNormals[a-1][b]);
+	//		glVertex3fv(eggTable[a - 1][b]);
+	//		//prawy gorny trojkat
+	//			glNormal3fv(eggNormals[a][b]);
+	//		glVertex3fv(eggTable[a][b]);
+	//			glNormal3fv(eggNormals[a-1][b-1]);
+	//		glVertex3fv(eggTable[a - 1][b - 1]);
+	//			glNormal3fv(eggNormals[a][b-1]);
+	//		glVertex3fv(eggTable[a][b - 1]);
+	//	}
 	glEnd();
 
 	glBegin(GL_LINES);
@@ -523,9 +582,9 @@ void RenderScene(void)
 
 	// Ustawienie koloru rysowania na bia³y
 	//glScalef(0.2, 0.2, 0.2);
-	glutSolidTeapot(4);
+	//glutSolidTeapot(4);
 	//glTranslatef(0.0, -5.0, 0.0);
-	//egg(DIVISIONS);
+	egg(DIVISIONS);
 	//glutWireTeapot(3.0);
 	// Narysowanie czajnika
 	glFlush();
