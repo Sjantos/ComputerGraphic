@@ -12,8 +12,8 @@ namespace GKProject
     {
         View view;
         GameBoard gameBoard;
+        int gameBoardSize;
         Vector3 modelPosition;
-        Vector3 modelRotation;
 
         int frameCounter;
         bool newBlockNeeded;
@@ -26,16 +26,15 @@ namespace GKProject
 
         public Game(int width, int height) : base(width, height)
         {
+            gameBoardSize = 10;
             level = 0;
             frameCounter = 0;
             newBlockNeeded = true;
             near = 1.0f;
             far = 100.0f;
-            gameBoard = new GameBoard(10);
+            gameBoard = new GameBoard(gameBoardSize);
 
             modelPosition = new Vector3(0.0f, 1.0f, 0.0f);
-            modelRotation = new Vector3((float)MathHelper.DegreesToRadians(0.0), (float)MathHelper.DegreesToRadians(0.0), (float)MathHelper.DegreesToRadians(0.0));
-            view = new View(modelPosition, modelRotation, 1.0);
 
             GL.Enable(EnableCap.Texture2D);
             Input.Initialize(this);
@@ -54,7 +53,6 @@ namespace GKProject
             float[] light_position = new float[] { 0.0f, 0.0f, 1.5f };
             GL.Light(LightName.Light0, LightParameter.Position, light_position);
             GL.Enable(EnableCap.Light0);
-            //gameBoard.MakeNewBlock();
         }
 
         protected override void OnUpdateFrame(FrameEventArgs e)
@@ -88,7 +86,6 @@ namespace GKProject
             if (newBlockNeeded)
             {
                 gameBoard.LockBlock();
-                //usun linie
                 if(gameBoard.DeleteFullLine())
                 {
                     if (level < 45)
@@ -98,7 +95,6 @@ namespace GKProject
                     
             }
 
-            view.Update();
             Input.Update();
         }
 
@@ -110,7 +106,7 @@ namespace GKProject
 
             Matrix4 perspective = Matrix4.CreatePerspectiveFieldOfView(0.7f, this.Width / this.Height, near, far);
             
-            Matrix4 lookAt = Matrix4.LookAt(new Vector3(0, 20, 30), modelPosition, new Vector3(0, 1, 0));
+            Matrix4 lookAt = Matrix4.LookAt(new Vector3(0, 2*gameBoardSize, 3*gameBoardSize), modelPosition, new Vector3(0, 1, 0));
             GL.MatrixMode(MatrixMode.Projection);
             GL.LoadIdentity();
             GL.LoadMatrix(ref perspective);
@@ -121,24 +117,10 @@ namespace GKProject
             GL.LoadMatrix(ref lookAt);
 
             GL.Viewport(0, 0, this.Width, this.Height);
-            GL.Enable(EnableCap.DepthTest);
 
-            view.ApplyTransform();
             gameBoard.Render();
 
             this.SwapBuffers();
         }
-
-        //protected override void OnResize(EventArgs e)
-        //{
-        //    base.OnResize(e);
-
-        //    GL.Viewport(0, 0, this.Width, this.Height);
-        //    GL.MatrixMode(MatrixMode.Projection);
-        //    GL.LoadIdentity();
-        //    Matrix4 matrix = Matrix4.Perspective(0.7f, this.Width / this.Height, near, far);
-        //    GL.LoadMatrix(ref matrix);
-        //    GL.MatrixMode(MatrixMode.Modelview);
-        //}
     }
 }

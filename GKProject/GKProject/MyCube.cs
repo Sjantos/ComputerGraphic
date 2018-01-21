@@ -84,7 +84,6 @@ namespace GKProject
 
         public void Render()
         {
-            //GL.PushMatrix();
             GL.BindTexture(TextureTarget.Texture2D, textureID);
             GL.Begin(BeginMode.Quads);
             GL.Color3(1.0, 0.0, 0.0);
@@ -156,7 +155,6 @@ namespace GKProject
             GL.Vertex3(leftTopFront);
 
             GL.End();
-            //GL.PopMatrix();
         }
 
         public MyCubeTexture Texture { get { return (MyCubeTexture)(textureID - 1); } set { textureID = texturesCollection[(int)value]; } }

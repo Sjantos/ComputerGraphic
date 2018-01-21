@@ -75,8 +75,6 @@ namespace GKProject
                             TakeCells();
                         }
                     }
-
-                    
                     break;
                 default:
                     break;

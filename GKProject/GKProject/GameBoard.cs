@@ -21,6 +21,10 @@ namespace GKProject
         BaseBlock actualBlock;
         Random random;
 
+        /// <summary>
+        /// Size should be less than 20
+        /// </summary>
+        /// <param name="width">width of game board</param>
         public GameBoard(int width = 10)
         {
             random = new Random();
