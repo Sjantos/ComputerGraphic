@@ -1,7 +1,3 @@
-/*************************************************************************************/
-//  Szkielet programu do tworzenia modelu sceny 3-D z wizualizacj¹ osi  
-//  uk³adu wspó³rzêdnych dla rzutowania perspektywicznego
-/*************************************************************************************/
 #include <windows.h>
 #include <gl/gl.h>
 #include <gl/glut.h>
@@ -12,48 +8,48 @@
 #define DIVISIONS 20
 
 GLdouble upY = 1.0;
+//camera variables
 static GLfloat R = 20.0;
-static GLfloat R1 = 10.0;
-static GLfloat R2 = 10.0;
-static GLfloat azymut = 0.0;   // wokol Y
+static GLfloat azymut = 0.0;
 static GLfloat elewacja = 0.0;
-static GLfloat azymut1 = 0.0;   // wokol Y
-static GLfloat elewacja1 = 0.0;
-static GLfloat azymut2 = 0.0;   // wokol Y
-static GLfloat elewacja2 = 0.0;
-static GLfloat pix2angle;     // przelicznik pikseli na stopnie
 
-static GLint status = 0;       // stan klawiszy myszy 
-							   // 0 - nie naciœniêto ¿adnego klawisza
-							   // 1 - naciœniêty zostaæ lewy klawisz
-
-static int x_pos_old = 0;       // poprzednia pozycja kursora myszy
+static int x_pos_old = 0;
 static int y_pos_old = 0;
 static int y_scale_old = 0;
 static int y_scale_new = 1;
-
-static int delta_x = 0;        // ró¿nica pomiêdzy pozycj¹ bie¿¹c¹
+static int delta_x = 0;
 static int delta_y = 0;
+static float delta_scale = 1;
 
-static int x_pos_old1 = 0;       // poprzednia pozycja kursora myszy
+//light 1 variables
+static GLfloat R1 = 10.0;
+static GLfloat azymut1 = 0.0;
+static GLfloat elewacja1 = 0.0;
+
+static int x_pos_old1 = 0;
 static int y_pos_old1 = 0;
 static int y_scale_old1 = 0;
 static int y_scale_new1 = 1;
-
-static int delta_x1 = 0;        // ró¿nica pomiêdzy pozycj¹ bie¿¹c¹
+static int delta_x1 = 0;
 static int delta_y1 = 0;
 
-static int x_pos_old2 = 0;       // poprzednia pozycja kursora myszy
+//light 2 variables
+static GLfloat R2 = 10.0;
+static GLfloat azymut2 = 0.0;
+static GLfloat elewacja2 = 0.0;
+
+static int x_pos_old2 = 0;
 static int y_pos_old2 = 0;
 static int y_scale_old2 = 0;
 static int y_scale_new2 = 1;
-
-static int delta_x2 = 0;        // ró¿nica pomiêdzy pozycj¹ bie¿¹c¹
+static int delta_x2 = 0;
 static int delta_y2 = 0;
 
+static GLfloat pix2angle;
 
-static float delta_scale = 1;
-// i poprzedni¹ kursora myszy 
+//mouse key status
+static GLint status = 0;
+
 typedef float point3[3];
 point3** eggTable;
 point3** eggNormals;
@@ -64,8 +60,7 @@ float YScale = 1.0;
 bool tablesInitialized = false;
 bool model = true;
 
-
-
+//functions used in calculating points and normals
 float x(float u, float v)
 {
 	return (-90 * pow(u, 5) + 225 * pow(u, 4) - 270 * pow(u, 3) + 180 * pow(u, 2) - 45 * u)*cos(M_PI*v);
@@ -146,6 +141,7 @@ float normZ(float u, float v)
 	return normalZ(u, v) / normLength(u, v);
 }
 
+//Prepares tables of points
 void initializeTables(int numberOfDivides)
 {
 	float maxX = 0.0, maxY = 0.0;
@@ -162,6 +158,8 @@ void initializeTables(int numberOfDivides)
 			eggTable[i][j][0] = x(u, v);
 			eggTable[i][j][1] = y(u, v);
 			eggTable[i][j][2] = z(u, v);
+			
+			//Extraordinary points
 			if (eggTable[i][j][0] == 0.0f && eggTable[i][j][2] == 0.0f)
 			{
 				if (eggTable[i][j][1] > 0)
@@ -179,6 +177,7 @@ void initializeTables(int numberOfDivides)
 			}
 			else
 			{
+				//Calculate normals
 				if (i >= numberOfDivides / 2)
 				{
 					eggNormals[i][j][0] = -1 * normX(u, v);
@@ -192,22 +191,16 @@ void initializeTables(int numberOfDivides)
 					eggNormals[i][j][2] = normZ(u, v);
 				}
 			}
-
 			
-				/*eggNormals[i][j][0] = normX(u, v);
-				eggNormals[i][j][1] = normY(u, v);
-				eggNormals[i][j][2] = normZ(u, v);*/
-			
-			//printf("%f  %f  %f\n", normX(u, v), normY(u, v), normZ(u, v));
 			if (eggTable[i][j][0] > maxX)
 				maxX = eggTable[i][j][0];
 			if (eggTable[i][j][1] > maxY)
 				maxY = eggTable[i][j][1];
 		}
 	}
-	//printf("%f  %f", maxX, maxY);
 }
 
+//Draw solid egg
 void drawSolidEgg(int numberOfDivides)
 {
 	glBegin(GL_TRIANGLES);
@@ -216,81 +209,52 @@ void drawSolidEgg(int numberOfDivides)
 
 	for (int i = 0; i < DIVISIONS - 1; i++) {
 		for (int j = 0; j < DIVISIONS - 1; j++) {
+			//Give vertices in good order
 			if (i < (DIVISIONS - 1) / 2) {
-				//glTexCoord2f((double)(i + 1)*interval, (double)j*interval);
 				glNormal3f(eggNormals[i + 1][j][0], eggNormals[i + 1][j][1], eggNormals[i + 1][j][2]);
 				glVertex3f(eggTable[i + 1][j][0], eggTable[i + 1][j][1], eggTable[i + 1][j][2]);
 
-				//glTexCoord2f((double)(i)*interval, (double)(j + 1)*interval);
 				glNormal3f(eggNormals[i][j + 1][0], eggNormals[i][j + 1][1], eggNormals[i][j + 1][2]);
 				glVertex3f(eggTable[i][j + 1][0], eggTable[i][j + 1][1], eggTable[i][j + 1][2]);
 
-				//glTexCoord2f((double)(i)*interval, (double)(j)*interval);
 				glNormal3f(eggNormals[i][j][0], eggNormals[i][j][1], eggNormals[i][j][2]);
 				glVertex3f(eggTable[i][j][0], eggTable[i][j][1], eggTable[i][j][2]);
 
-				//glTexCoord2f((double)(i + 1)*interval, (double)(j)*interval);
 				glNormal3f(eggNormals[i + 1][j][0], eggNormals[i + 1][j][1], eggNormals[i + 1][j][2]);
 				glVertex3f(eggTable[i + 1][j][0], eggTable[i + 1][j][1], eggTable[i + 1][j][2]);
 
-				//glTexCoord2f((double)(i + 1)*interval, (double)(j + 1)*interval);
 				glNormal3f(eggNormals[i + 1][j + 1][0], eggNormals[i + 1][j + 1][1], eggNormals[i + 1][j + 1][2]);
 				glVertex3f(eggTable[i + 1][j + 1][0], eggTable[i + 1][j + 1][1], eggTable[i + 1][j + 1][2]);
 
-				//glTexCoord2f((double)(i)*interval, (double)(j + 1)*interval);
 				glNormal3f(eggNormals[i][j + 1][0], eggNormals[i][j + 1][1], eggNormals[i][j + 1][2]);
 				glVertex3f(eggTable[i][j + 1][0], eggTable[i][j + 1][1], eggTable[i][j + 1][2]);
 
 			}
-			else {
-				//glTexCoord2f((double)(i)*interval, (double)j*interval);
+			else 
+			{
 				glNormal3f(eggNormals[i][j][0], eggNormals[i][j][1], eggNormals[i][j][2]);
 				glVertex3f(eggTable[i][j][0], eggTable[i][j][1], eggTable[i][j][2]);
 
-				//glTexCoord2f((double)(i)*interval, (double)(j + 1)*interval);
 				glNormal3f(eggNormals[i][j + 1][0], eggNormals[i][j + 1][1], eggNormals[i][j + 1][2]);
 				glVertex3f(eggTable[i][j + 1][0], eggTable[i][j + 1][1], eggTable[i][j + 1][2]);
 
-				//glTexCoord2f((double)(i + 1)*interval, (double)(j)*interval);
 				glNormal3f(eggNormals[i + 1][j][0], eggNormals[i + 1][j][1], eggNormals[i + 1][j][2]);
 				glVertex3f(eggTable[i + 1][j][0], eggTable[i + 1][j][1], eggTable[i + 1][j][2]);
 
-				//glTexCoord2f((double)(i)*interval, (double)(j + 1)*interval);
 				glNormal3f(eggNormals[i][j + 1][0], eggNormals[i][j + 1][1], eggNormals[i][j + 1][2]);
 				glVertex3f(eggTable[i][j + 1][0], eggTable[i][j + 1][1], eggTable[i][j + 1][2]);
 
-				//glTexCoord2f((double)(i + 1)*interval, (double)(j + 1)*interval);
 				glNormal3f(eggNormals[i + 1][j + 1][0], eggNormals[i + 1][j + 1][1], eggNormals[i + 1][j + 1][2]);
 				glVertex3f(eggTable[i + 1][j + 1][0], eggTable[i + 1][j + 1][1], eggTable[i + 1][j + 1][2]);
 
-				//glTexCoord2f((double)(i + 1)*interval, (double)(j)*interval);
 				glNormal3f(eggNormals[i + 1][j][0], eggNormals[i + 1][j][1], eggNormals[i + 1][j][2]);
 				glVertex3f(eggTable[i + 1][j][0], eggTable[i + 1][j][1], eggTable[i + 1][j][2]);
 			}
-
 		}
 	}
-
-	//for (int a = 1; a < numberOfDivides; a++)
-	//	for (int b = 1; b < numberOfDivides; b++)
-	//	{
-	//		//lewy dolny trojkat
-	//			glNormal3fv(eggNormals[a][b]);
-	//		glVertex3fv(eggTable[a][b]);
-	//			glNormal3fv(eggNormals[a-1][b-1]);
-	//		glVertex3fv(eggTable[a - 1][b - 1]);
-	//			glNormal3fv(eggNormals[a-1][b]);
-	//		glVertex3fv(eggTable[a - 1][b]);
-	//		//prawy gorny trojkat
-	//			glNormal3fv(eggNormals[a][b]);
-	//		glVertex3fv(eggTable[a][b]);
-	//			glNormal3fv(eggNormals[a-1][b-1]);
-	//		glVertex3fv(eggTable[a - 1][b - 1]);
-	//			glNormal3fv(eggNormals[a][b-1]);
-	//		glVertex3fv(eggTable[a][b - 1]);
-	//	}
 	glEnd();
 
+	//draw normals, for check
 	glBegin(GL_LINES);
 	for (int i = 0; i < numberOfDivides; i++)
 	{
@@ -304,6 +268,7 @@ void drawSolidEgg(int numberOfDivides)
 	glEnd();
 }
 
+//Draw egg (ready to use in RenderScene)
 void egg(int numberOfDivides)
 {
 	if (!tablesInitialized)
@@ -314,47 +279,41 @@ void egg(int numberOfDivides)
 	drawSolidEgg(numberOfDivides);
 }
 
-
+//Gets mouse position and prepare them for use
 void Mouse(int btn, int state, int x, int y)
 {
-	status = 0;          // nie zosta³ wciêniêty ¿aden klawisz 
+	status = 0;
 
 	if (btn == GLUT_LEFT_BUTTON && state == GLUT_DOWN)
 	{
-		x_pos_old1 = x;         // przypisanie aktualnie odczytanej pozycji kursora 
-							   // jako pozycji poprzedniej
+		x_pos_old1 = x;
 		y_pos_old1 = y;
-		status = 1;          // wciêniêty zosta³ lewy klawisz myszy
+		status = 1;
 	}
 	else if (btn == GLUT_RIGHT_BUTTON && state == GLUT_DOWN)
 	{
-		x_pos_old2 = x;         // przypisanie aktualnie odczytanej pozycji kursora 
-								// jako pozycji poprzedniej
+		x_pos_old2 = x;
 		y_pos_old2 = y;
 		status = 2;
 	}
 }
 
-/*************************************************************************************/
-// Funkcja "monitoruje" po³o¿enie kursora myszy i ustawia wartoœci odpowiednich 
-// zmiennych globalnych
-
+//Calculates move of mouse
 void Motion(GLsizei x, GLsizei y)
 {
 	if (model)
 	{
+		//Rotation
 		if (status == 1)
 		{
-			delta_x = x - x_pos_old;     // obliczenie ró¿nicy po³o¿enia kursora myszy
-
-			x_pos_old = x;            // podstawienie bie¿¹cego po³o¿enia jako poprzednie
+			delta_x = x - x_pos_old;
+			x_pos_old = x;
 
 			delta_y = y - y_pos_old;
-
 			y_pos_old = y;
 		}
 
-
+		//Zoom
 		if (status == 2)
 		{
 			y_scale_old = y_scale_new;
@@ -374,30 +333,19 @@ void Motion(GLsizei x, GLsizei y)
 	{
 		if (status == 1)
 		{
-			delta_x1 = x - x_pos_old1;     // obliczenie ró¿nicy po³o¿enia kursora myszy
-
-			x_pos_old1 = x;            // podstawienie bie¿¹cego po³o¿enia jako poprzednie
+			//light 1
+			delta_x1 = x - x_pos_old1;
+			x_pos_old1 = x;
 
 			delta_y1 = y - y_pos_old1;
-
 			y_pos_old1 = y;
 
-
-
-
-			/*************************************************************************************/
-			// Definicja Ÿród³a œwiat³a
-
-			GLfloat light_position[] = { 6.0, 6.0, 10.0, 1.0 };
-
-			GLfloat light_ambient[] = { 0.0, 0.0, 0.0, 1.0 }; //zerowac na laboratorium (otoczenie swieci na jajko)
-			GLfloat light_diffuse[] = { 0.9, 0.9, 0.0, 1.0 }; //swiatlo rozproszone
-			GLfloat light_specular[] = { 1.0, 1.0, 0.0, 1.0 }; //swiatlo odbite
+			GLfloat light_ambient[] = { 0.0, 0.0, 0.0, 1.0 };
+			GLfloat light_diffuse[] = { 0.9, 0.9, 0.0, 1.0 };
+			GLfloat light_specular[] = { 1.0, 1.0, 0.0, 1.0 };
 			GLfloat att_constant = { 1.0 };
 			GLfloat att_linear = { (float)0.05 };
 			GLfloat att_quadratic = { (float)0.001 };
-			/*************************************************************************************/
-			// Ustawienie parametrów Ÿród³a
 			glLightfv(GL_LIGHT0, GL_AMBIENT, light_ambient);
 			glLightfv(GL_LIGHT0, GL_DIFFUSE, light_diffuse);
 			glLightfv(GL_LIGHT0, GL_SPECULAR, light_specular);
@@ -406,37 +354,23 @@ void Motion(GLsizei x, GLsizei y)
 			glLightf(GL_LIGHT0, GL_CONSTANT_ATTENUATION, att_constant);
 			glLightf(GL_LIGHT0, GL_LINEAR_ATTENUATION, att_linear);
 			glLightf(GL_LIGHT0, GL_QUADRATIC_ATTENUATION, att_quadratic);
-
-
-
-
 		}
-
 
 		if (status == 2)
 		{
-			delta_x2 = x - x_pos_old2;     // obliczenie ró¿nicy po³o¿enia kursora myszy
-
-			x_pos_old2 = x;            // podstawienie bie¿¹cego po³o¿enia jako poprzednie
+			//light 2
+			delta_x2 = x - x_pos_old2;
+			x_pos_old2 = x;
 
 			delta_y2 = y - y_pos_old2;
-
 			y_pos_old2 = y;
 
-
-
-
-			GLfloat light_position1[] = { -3.0, -3.0, 10.0, 1.0 };
-
-			GLfloat light_ambient1[] = { 0.0, 0.0, 0.0, 1.0 }; //zerowac na laboratorium (otoczenie swieci na jajko)
-			GLfloat light_diffuse1[] = { 0.9, 0.0, 0.0, 1.0 }; //swiatlo rozproszone
-			GLfloat light_specular1[] = { 1.0, 0.0, 0.0, 1.0 }; //swiatlo odbite
+			GLfloat light_ambient1[] = { 0.0, 0.0, 0.0, 1.0 };
+			GLfloat light_diffuse1[] = { 0.9, 0.0, 0.0, 1.0 };
+			GLfloat light_specular1[] = { 1.0, 0.0, 0.0, 1.0 };
 			GLfloat att_constant1 = { 1.0 };
 			GLfloat att_linear1 = { (float)0.05 };
 			GLfloat att_quadratic1 = { (float)0.001 };
-			/*************************************************************************************/
-			// Ustawienie parametrów Ÿród³a
-
 			glLightfv(GL_LIGHT1, GL_AMBIENT, light_ambient1);
 			glLightfv(GL_LIGHT1, GL_DIFFUSE, light_diffuse1);
 			glLightfv(GL_LIGHT1, GL_SPECULAR, light_specular1);
@@ -445,84 +379,68 @@ void Motion(GLsizei x, GLsizei y)
 			glLightf(GL_LIGHT1, GL_CONSTANT_ATTENUATION, att_constant1);
 			glLightf(GL_LIGHT1, GL_LINEAR_ATTENUATION, att_linear1);
 			glLightf(GL_LIGHT1, GL_QUADRATIC_ATTENUATION, att_quadratic1);
-
-
-
-
-
 		}
 	}
 
-
-
-
-	
-	glutPostRedisplay();     // przerysowanie obrazu sceny
+	//redraw scene
+	glutPostRedisplay();
 }
 
-/*************************************************************************************/
-
+//Draw X, Y, Z axis
 void Axes(void)
 {
 	point3  x_min = { -5.0, 0.0, 0.0 };
 	point3  x_max = { 5.0, 0.0, 0.0 };
-	// pocz?tek i koniec obrazu osi x
 
 	point3  y_min = { 0.0, -5.0, 0.0 };
 	point3  y_max = { 0.0, 5.0, 0.0 };
-	// pocz?tek i koniec obrazu osi y
 
 	point3  z_min = { 0.0, 0.0, -5.0 };
 	point3  z_max = { 0.0, 0.0, 5.0 };
-	//  pocz?tek i koniec obrazu osi y
-	glColor3f(1.0f, 0.0f, 0.0f);  // kolor rysowania osi - czerwony
-	glBegin(GL_LINES); // rysowanie osi x
+	
+	//Red X axis
+	glColor3f(1.0f, 0.0f, 0.0f);
+	glBegin(GL_LINES);
 	glVertex3fv(x_min);
 	glVertex3fv(x_max);
 	glEnd();
 
-	glColor3f(0.0f, 1.0f, 0.0f);  // kolor rysowania - zielony
-	glBegin(GL_LINES);  // rysowanie osi y
+	//Green Y axis
+	glColor3f(0.0f, 1.0f, 0.0f);
+	glBegin(GL_LINES);
 	glVertex3fv(y_min);
 	glVertex3fv(y_max);
 	glEnd();
 
-	glColor3f(0.0f, 0.0f, 1.0f);  // kolor rysowania - niebieski
-	glBegin(GL_LINES); // rysowanie osi z
+	//Blue Z axis
+	glColor3f(0.0f, 0.0f, 1.0f);
+	glBegin(GL_LINES);
 	glVertex3fv(z_min);
 	glVertex3fv(z_max);
 	glEnd();
 }
-/*************************************************************************************/
-// Funkcja okreœlaj¹ca co ma byæ rysowane (zawsze wywo³ywana, gdy trzeba 
-// przerysowaæ scenê)
 
+//Called whenever image must be rendered
 void RenderScene(void)
 {
-
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	// Czyszczenie okna aktualnym kolorem czyszcz¹cym
-
 	glLoadIdentity();
-	// Czyszczenie macierzy bie??cej
-
 	gluLookAt(viewer[0], viewer[1], -viewer[2], 0.0, 0.0, 0.0, 0.0, upY, 0.0);
-	// Zdefiniowanie po³o¿enia obserwatora
 	Axes();
-	// Narysowanie osi przy pomocy funkcji zdefiniowanej powy¿ej
+	//Draw cubes in lights positions for check
 	glTranslatef(light1[0], light1[1], light1[2]);
 	glutWireCube(0.5);
 	glTranslatef(-1 * light1[0], -1 * light1[1], -1*light1[2]);
 	glTranslatef(light2[0], light2[1], light2[2]);
 	glutWireCube(0.5);
 	glTranslatef(-1 * light2[0], -1 * light2[1], -1 * light2[2]);
-	//glTranslatef(0.0, 0.0, 0.0);
 
 	if (status == 1 && model)
 	{
 		azymut += delta_x*pix2angle / 100;
 		elewacja += delta_y*pix2angle / 100;
 	}
+	//check angles domain
 	if (azymut > 2 * M_PI)
 		azymut -= 2 * M_PI;
 	if (elewacja > 2 * M_PI)
@@ -536,19 +454,20 @@ void RenderScene(void)
 		upY = -1;
 	else
 		upY = 1;
+	//camera position
 	viewer[0] = R*cos(azymut)*cos(elewacja);
 	viewer[1] = R*sin(elewacja);
 	viewer[2] = R*sin(azymut)*cos(elewacja);
 
-
-	if (status == 1 && !model)                     // jeœli lewy klawisz myszy wciêniêty
+	//light 1 and 2
+	if (status == 1 && !model)
 	{
-		azymut1 += delta_x1*pix2angle / 100;    // modyfikacja k¹ta obrotu o kat proporcjonalny
+		azymut1 += delta_x1*pix2angle / 100;
 		elewacja1 += delta_y1*pix2angle / 100;
-	}                                  // do ró¿nicy po³o¿eñ kursora myszy
+	}
 	if (status == 2 && !model)
 	{
-		azymut2 += delta_x2*pix2angle / 100;    // modyfikacja k¹ta obrotu o kat proporcjonalny
+		azymut2 += delta_x2*pix2angle / 100;
 		elewacja2 += delta_y2*pix2angle / 100;
 	}
 	if (azymut1 > 2 * M_PI)
@@ -574,228 +493,106 @@ void RenderScene(void)
 	light1[0] = R1*cos(azymut1)*cos(elewacja1);
 	light1[1] = R1*sin(elewacja1);
 	light1[2] = R1*sin(azymut1)*cos(elewacja1);
-	printf("%f  %f  %f\n", light1[0], light1[1], light1[2]);
 
 	light2[0] = R2*cos(azymut2)*cos(elewacja2);
 	light2[1] = R2*sin(elewacja2);
 	light2[2] = R2*sin(azymut2)*cos(elewacja2);
 
-	// Ustawienie koloru rysowania na bia³y
-	//glScalef(0.2, 0.2, 0.2);
-	//glutSolidTeapot(4);
-	//glTranslatef(0.0, -5.0, 0.0);
 	egg(DIVISIONS);
-	//glutWireTeapot(3.0);
-	// Narysowanie czajnika
 	glFlush();
-	// Przekazanie poleceñ rysuj¹cych do wykonania
 	glutSwapBuffers();
-
 }
-/*************************************************************************************/
-// Funkcja ustalaj¹ca stan renderowania
 
+//Capture pressed keys
 void keys(unsigned char key, int x, int y)
 {
 	if (key == 'p') model = true;
 	if (key == 'l') model = false;
 
-	RenderScene(); // przerysowanie obrazu sceny
+	RenderScene();
 }
 
-
+//Initialize OpenGL window
 void MyInit(void)
 {
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-	// Kolor czyszcz¹cy (wype³nienia okna) ustawiono na czarny
-
-
-	// Definicja materia³u z jakiego zrobiony jest czajnik 
-
 	GLfloat mat_ambient[] = { 1.0, 1.0, 1.0, 1.0 };
-	// wspó³czynniki ka =[kar,kag,kab] dla œwiat³a otoczenia
-
 	GLfloat mat_diffuse[] = { 1.0, 1.0, 1.0, 1.0 };
-	// wspó³czynniki kd =[kdr,kdg,kdb] œwiat³a rozproszonego
-
 	GLfloat mat_specular[] = { 1.0, 1.0, 1.0, 1.0 };
-	// wspó³czynniki ks =[ksr,ksg,ksb] dla œwiat³a odbitego                
-
 	GLfloat mat_shininess = { 20.0 };
-	// wspó³czynnik n opisuj¹cy po³ysk powierzchni
-
-	/*************************************************************************************/
-	// Definicja Ÿród³a œwiat³a
-
-	GLfloat light_position[] = { 0.0, 0.0, 30.0, 1.0 };
-	// po³o¿enie Ÿród³a
-
-	GLfloat light_ambient[] = { 0.0, 0.0, 0.0, 1.0 }; //zerowac na laboratorium (otoczenie swieci na jajko)
-	// sk³adowe intensywnoœci œwiecenia Ÿród³a œwiat³a otoczenia
-	// Ia = [Iar,Iag,Iab]
-
-	GLfloat light_diffuse[] = { 0.0, 0.0, 0.0, 1.0 }; //swiatlo rozproszone
-	// sk³adowe intensywnoœci œwiecenia Ÿród³a œwiat³a powoduj¹cego
-	// odbicie dyfuzyjne Id = [Idr,Idg,Idb]
-
-	GLfloat light_specular[] = { 1.0, 1.0, 0.0, 1.0 }; //swiatlo odbite
-	// sk³adowe intensywnoœci œwiecenia Ÿród³a œwiat³a powoduj¹cego
-	// odbicie kierunkowe Is = [Isr,Isg,Isb]
-
+	
+	GLfloat light_ambient[] = { 0.0, 0.0, 0.0, 1.0 };
+	GLfloat light_diffuse[] = { 0.0, 0.0, 0.0, 1.0 };
+	GLfloat light_specular[] = { 1.0, 1.0, 0.0, 1.0 };
 	GLfloat att_constant = { 1.0 };
-	// sk³adowa sta³a ds dla modelu zmian oœwietlenia w funkcji 
-	// odleg³oœci od Ÿród³a
-
 	GLfloat att_linear = { (float)0.05 };
-	// sk³adowa liniowa dl dla modelu zmian oœwietlenia w funkcji 
-	// odleg³oœci od Ÿród³a
-
 	GLfloat att_quadratic = { (float)0.001 };
-	// sk³adowa kwadratowa dq dla modelu zmian oœwietlenia w funkcji
-	// odleg³oœci od Ÿród³a
-
-	/*************************************************************************************/
-	// Ustawienie parametrów materia³u i Ÿród³a œwiat³a
-	/*************************************************************************************/
-	// Ustawienie patrametrów materia³u
 
 	glMaterialfv(GL_FRONT, GL_SPECULAR, mat_specular);
 	glMaterialfv(GL_FRONT, GL_AMBIENT, mat_ambient);
 	glMaterialfv(GL_FRONT, GL_DIFFUSE, mat_diffuse);
 	glMaterialf(GL_FRONT, GL_SHININESS, mat_shininess);
 
-	/*************************************************************************************/
-	// Ustawienie parametrów Ÿród³a
-
 	glLightfv(GL_LIGHT0, GL_AMBIENT, light_ambient);
 	glLightfv(GL_LIGHT0, GL_DIFFUSE, light_diffuse);
-	glLightfv(GL_LIGHT0, GL_SPECULAR, light1);// light_specular);
-	glLightfv(GL_LIGHT0, GL_POSITION, light1);// light_position);
+	glLightfv(GL_LIGHT0, GL_SPECULAR, light_specular);
+	glLightfv(GL_LIGHT0, GL_POSITION, light1);
 
 	glLightf(GL_LIGHT0, GL_CONSTANT_ATTENUATION, att_constant);
 	glLightf(GL_LIGHT0, GL_LINEAR_ATTENUATION, att_linear);
 	glLightf(GL_LIGHT0, GL_QUADRATIC_ATTENUATION, att_quadratic);
 
-	/*************************************************************************************/
-	// Ustawienie opcji systemu oœwietlania sceny 
-
-
-
-
-
-	/*************************************************************************************/
-	// Definicja Ÿród³a œwiat³a 2
-
-	GLfloat light_position1[] = { 10.0, 0.0, 30.0, 1.0 };
-
-	GLfloat light_ambient1[] = { 0.0, 0.0, 0.0, 1.0 }; //zerowac na laboratorium (otoczenie swieci na jajko)
-	GLfloat light_diffuse1[] = { 1.0, 1.0, 1.0, 1.0 }; //swiatlo rozproszone
-	GLfloat light_specular1[] = { 1.0, 0.0, 0.0, 1.0 }; //swiatlo odbite
+	GLfloat light_ambient1[] = { 0.0, 0.0, 0.0, 1.0 };
+	GLfloat light_diffuse1[] = { 1.0, 1.0, 1.0, 1.0 };
+	GLfloat light_specular1[] = { 1.0, 0.0, 0.0, 1.0 };
 	GLfloat att_constant1 = { 1.0 };
 	GLfloat att_linear1 = { (float)0.05 };
 	GLfloat att_quadratic1 = { (float)0.001 };
-	glMaterialfv(GL_FRONT, GL_SPECULAR, mat_specular);
-	glMaterialfv(GL_FRONT, GL_AMBIENT, mat_ambient);
-	glMaterialfv(GL_FRONT, GL_DIFFUSE, mat_diffuse);
-	glMaterialf(GL_FRONT, GL_SHININESS, mat_shininess);
-	/*************************************************************************************/
-	// Ustawienie parametrów Ÿród³a
 
 	glLightfv(GL_LIGHT1, GL_AMBIENT, light_ambient1);
 	glLightfv(GL_LIGHT1, GL_DIFFUSE, light_diffuse1);
 	glLightfv(GL_LIGHT1, GL_SPECULAR, light_specular1);
-	glLightfv(GL_LIGHT1, GL_POSITION, light2);// light_position1);
+	glLightfv(GL_LIGHT1, GL_POSITION, light2);
 
 	glLightf(GL_LIGHT1, GL_CONSTANT_ATTENUATION, att_constant1);
 	glLightf(GL_LIGHT1, GL_LINEAR_ATTENUATION, att_linear1);
 	glLightf(GL_LIGHT1, GL_QUADRATIC_ATTENUATION, att_quadratic1);
 
-
-
-
-
-
-	glShadeModel(GL_SMOOTH); // w³aczenie ³agodnego cieniowania
-	glEnable(GL_LIGHTING);   // w³aczenie systemu oœwietlenia sceny 
-	glEnable(GL_LIGHT0);     // w³¹czenie Ÿród³a o numerze 0
+	glShadeModel(GL_SMOOTH);
+	glEnable(GL_LIGHTING);
+	glEnable(GL_LIGHT0);
 	glEnable(GL_LIGHT1);
-	glEnable(GL_DEPTH_TEST); // w³¹czenie mechanizmu z-bufora 
+	glEnable(GL_DEPTH_TEST);
 }
-/*************************************************************************************/
 
-// Funkcja ma za zadanie utrzymanie sta³ych proporcji rysowanych 
-// w przypadku zmiany rozmiarów okna.
-// Parametry vertical i horizontal (wysokoœæ i szerokoœæ okna) s¹ 
-// przekazywane do funkcji za ka¿dym razem gdy zmieni siê rozmiar okna.
-
+//Recalculates images to have correct proportion after window resizing
 void ChangeSize(GLsizei horizontal, GLsizei vertical)
 {
-	pix2angle = 360.0 / (float)horizontal;  // przeliczenie pikseli na stopnie
-
+	pix2angle = 360.0 / (float)horizontal;
 	glMatrixMode(GL_PROJECTION);
-	// Prze³¹czenie macierzy bie¿¹cej na macierz projekcji
-
 	glLoadIdentity();
-	// Czyszcznie macierzy bie¿¹cej 
-
 	gluPerspective(70, 1.0, 1.0, 30.0);
-	// Ustawienie parametrów dla rzutu perspektywicznego
-
 
 	if (horizontal <= vertical)
 		glViewport(0, (vertical - horizontal) / 2, horizontal, horizontal);
-
 	else
 		glViewport((horizontal - vertical) / 2, 0, vertical, vertical);
-	// Ustawienie wielkoœci okna okna widoku (viewport) w zale¿noœci
-	// relacji pomiêdzy wysokoœci¹ i szerokoœci¹ okna
 
 	glMatrixMode(GL_MODELVIEW);
-	// Prze³¹czenie macierzy bie¿¹cej na macierz widoku modelu  
-
 	glLoadIdentity();
-	// Czyszczenie macierzy bie¿¹cej 
-
 }
-/*************************************************************************************/
-// G³ówny punkt wejœcia programu. Program dzia³a w trybie konsoli
 
-void main(/*int argc, char* argv[]*/)
+void main()
 {
-	//glutInit(&argc, argv);
-
 	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
-
 	glutInitWindowSize(600, 600);
-
-
-
-	glutCreateWindow("Rzutowanie perspektywiczne");
-
+	glutCreateWindow("OpenGL Lab4 zad2");
 	glutDisplayFunc(RenderScene);
-	// Okreœlenie, ¿e funkcja RenderScene bêdzie funkcj¹ zwrotn¹
-	// (callback function).  Bêdzie ona wywo³ywana za ka¿dym razem 
-	// gdy zajdzie potrzeba przerysowania okna
-
 	glutKeyboardFunc(keys);
-
 	glutReshapeFunc(ChangeSize);
-	// Dla aktualnego okna ustala funkcjê zwrotn¹ odpowiedzialn¹
-	// za zmiany rozmiaru okna                       
-
 	glutMouseFunc(Mouse);
-	// Ustala funkcjê zwrotn¹ odpowiedzialn¹ za badanie stanu myszy
-
 	glutMotionFunc(Motion);
-	// Ustala funkcjê zwrotn¹ odpowiedzialn¹ za badanie ruchu myszy
-
 	MyInit();
-	// Funkcja MyInit() (zdefiniowana powy¿ej) wykonuje wszelkie
-	// inicjalizacje konieczne  przed przyst¹pieniem do renderowania
 	glEnable(GL_DEPTH_TEST);
-	// W³¹czenie mechanizmu usuwania niewidocznych elementów sceny
-
 	glutMainLoop();
-	// Funkcja uruchamia szkielet biblioteki GLUT
 }
-/*************************************************************************************/

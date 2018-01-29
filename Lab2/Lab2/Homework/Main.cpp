@@ -1,7 +1,3 @@
-/*************************************************************************************/
-//  Szkielet programu do tworzenia modelu sceny 3-D z wizualizacj¹ osi  
-//  uk³adu wspó³rzednych
-/*************************************************************************************/
 #include <windows.h>
 #include <gl/gl.h>
 #include <gl/glut.h>
@@ -29,9 +25,7 @@ double f(double x, int a)
 	return returnValue;
 }
 
-/*************************************************************************************/
-// Funkcja rysuj¹ca osie uk³adu wspó³rzêdnych
-
+//Initialize table of points to draw, calculates proper values
 void initializeTables(int numberOfDivides)
 {
 	float interval =  XRange / (float)(numberOfDivides - 1);
@@ -48,30 +42,23 @@ void initializeTables(int numberOfDivides)
 			pointTable[i][j][0] = x*sqrt(x*x + y*y - x*x*y*y) / sqrt(x*x + y*y);
 			
 			pointTable[i][j][2] = y*sqrt(x*x + y*y - x*x*y*y) / sqrt(x*x + y*y);
-			float param = x*sqrt(x*x + y*y - x*x*y*y) / sqrt(x*x + y*y);
-
-			//Two another methods for generating (different x parameter equasion)
-			//pointTable[i][j][1] = f(abs(pointTable[i][j][0]/2 * (1- pointTable[i][j][2])/2)/*abs(pointTable[i][j][0])*/, WeierstrassParameterA);
-
-			//float xVal = -abs(pointTable[i][j][0]);
-			//float zVal = -abs(pointTable[i][j][2]);
-			//float p = ( 1+xVal )*( 1+zVal ) -0.1;
 
 			float xVal = (1+abs(pointTable[i][j][0]))/2;
 			float zVal = (1+abs(pointTable[i][j][2]))/2;
 
 			float p = sqrt(xVal*zVal+xVal*zVal);
 			float value = f(p, WeierstrassParameterA);
+			//Randomize values a bit, to make mountain not so perfect
 			value = sqrt((rand() / RAND_MAX + 0.5)*value);
 			pointTable[i][j][1] = value;
 		}
 	}
 }
 
+//Draw mountain from tables of points
 void drawMountain(int numberOfDivides)
 {
 	glPointSize(2.0);
-	//glBegin(GL_POINTS);
 	glBegin(GL_LINES);
 	glColor3f(1.0, 1.0, 1.0);
 	float interval = 1.0 / (float)(numberOfDivides - 1);
@@ -79,10 +66,6 @@ void drawMountain(int numberOfDivides)
 	for (int a = 1; a < numberOfDivides; a++)
 		for (int b = 1; b < numberOfDivides; b++)
 		{
-			//Help if want to view as 2D (as points)
-			//glColor3f(pointTable[a][b][1], pointTable[a][b][1], pointTable[a][b][1]);
-			//glVertex3dv(pointTable[a][b]);
-
 			glColor3d(pointTable[a][b - 1][1], pointTable[a][b - 1][1], pointTable[a][b - 1][1]);
 			glVertex3dv(pointTable[a][b - 1]);
 			glColor3d(pointTable[a][b][1], pointTable[a][b][1], pointTable[a][b][1]);
@@ -101,6 +84,7 @@ void drawMountain(int numberOfDivides)
 	glEnd();
 }
 
+//main function for rendering mountain (to call in RenderScene)
 void mountain(int numberOfDivides)
 {
 	if (!tableInitialized)
@@ -112,75 +96,46 @@ void mountain(int numberOfDivides)
 	drawMountain(numberOfDivides);
 }
 
+//Called whenever image must be rendered
 void RenderScene(void)
 {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	// Czyszczenie okna aktualnym kolorem czyszcz¹cym
 
 	glLoadIdentity();
-	// Czyszczenie macierzy bie¿¹cej
-
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
 
-	//Change -30.0f to -90.f if you want to view as 2D (as points)
 	glRotated(-30.0f, 1.0f, 0.0f, 0.0f);
 	mountain(100);
 
 	glFlush();
-	// Przekazanie poleceñ rysuj¹cych do wykonania
-
 	glutSwapBuffers();
-	//
 }
 
-/*************************************************************************************/
-// Funkcja ustalaj¹ca stan renderowania
-
+//Initialize OpenGL window
 void MyInit(void)
 {
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-	// Kolor czyszc¹cy (wype³nienia okna) ustawiono na czarny
 }
-/*************************************************************************************/
-// Funkcja ma za zadanie utrzymanie sta³ych proporcji rysowanych 
-// w przypadku zmiany rozmiarów okna.
-// Parametry vertical i horizontal (wysokoœæ i szerokoœæ okna) s¹ 
-// przekazywane do funkcji za ka¿dym razem gdy zmieni siê rozmiar okna.
 
+//Recalculates images to have correct proportion after window resizing
 void ChangeSize(GLsizei horizontal, GLsizei vertical)
 {
 	GLfloat AspectRatio;
-	// Deklaracja zmiennej AspectRatio  okreœlaj¹cej proporcjê
-	// wymiarów okna 
-	if (vertical == 0)  // Zabezpieczenie przed dzieleniem przez 0
+	if (vertical == 0)  // don't divide by 0
 		vertical = 1;
 	glViewport(0, 0, horizontal, vertical);
-	// Ustawienie wielkoœciokna okna widoku (viewport)
-	// W tym przypadku od (0,0) do (horizontal, vertical)  
 	glMatrixMode(GL_PROJECTION);
-	// Prze³¹czenie macierzy bie¿¹cej na macierz projekcji 
 	glLoadIdentity();
-	// Czyszcznie macierzy bie¿¹cej            
 	AspectRatio = (GLfloat)horizontal / (GLfloat)vertical;
-	// Wyznaczenie wspó³czynnika  proporcji okna
-	// Gdy okno nie jest kwadratem wymagane jest okreœlenie tak zwanej
-	// przestrzeni ograniczaj¹cej pozwalaj¹cej zachowaæ w³aœciwe
-	// proporcje rysowanego obiektu.
-	// Do okreslenia przestrzeni ograniczj¹cej s³u¿y funkcja
-	// glOrtho(...)    
 	if (horizontal <= vertical)
 		glOrtho(-1.0, 1.0, -1.0 / AspectRatio, 1.0 / AspectRatio, 10.0, -10.0);
 	else
 		glOrtho(-1.0*AspectRatio, 1.0*AspectRatio, -1.0, 1.0, 10.0, -10.0);
 
 	glMatrixMode(GL_MODELVIEW);
-	// Prze³¹czenie macierzy bie¿¹cej na macierz widoku modelu                                   
 	glLoadIdentity();
-	// Czyszcenie macierzy bie¿¹cej
 }
-/*************************************************************************************/
-// G³ówny punkt wejœcia programu. Program dzia³a w trybie konsoli
 
 void main(int argc, char* argv[])
 {
@@ -190,26 +145,12 @@ void main(int argc, char* argv[])
 
 	glutInitWindowSize(600, 600);
 
-	glutCreateWindow("Uk³ad wspó³rzêdnych 3-D");
+	glutCreateWindow("OpenGL Lab2 homework");
 
 	glutDisplayFunc(RenderScene);
-	// Okreœlenie, ¿e funkcja RenderScene bêdzie funkcj¹ zwrotn¹
-	// (callback function).  Bedzie ona wywo³ywana za ka¿dym razem 
-	// gdy zajdzie potrzba przeryswania okna 
 	glutReshapeFunc(ChangeSize);
-	// Dla aktualnego okna ustala funkcjê zwrotn¹ odpowiedzialn¹
-	// zazmiany rozmiaru okna      
 	MyInit();
-	// Funkcja MyInit() (zdefiniowana powy¿ej) wykonuje wszelkie
-	// inicjalizacje konieczne  przed przyst¹pieniem do renderowania
 	glEnable(GL_DEPTH_TEST);
-	// W³¹czenie mechanizmu usuwania powierzchni niewidocznych
-
-	
 
 	glutMainLoop();
-	// Funkcja uruchamia szkielet biblioteki GLUT
-
-	
 }
-/*************************************************************************************/
